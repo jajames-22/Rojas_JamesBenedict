@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Quality Predictor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f0f2f5; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            overflow-x: hidden; /* Prevents horizontal scroll */
+        }
+        
+        /* Sidebar Styling */
+        .sidebar { 
+            min-height: 100vh; 
+            background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%); 
+            color: white; 
+            width: 280px; 
+            position: fixed; /* Keeps sidebar in place while scrolling */
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .sidebar .nav-link { 
+            color: rgba(255, 255, 255, 0.7); 
+            margin-bottom: 8px; 
+            border-radius: 8px; 
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .sidebar .nav-link:hover { 
+            background-color: rgba(255, 255, 255, 0.1); 
+            color: #fff; 
+        }
+        .sidebar .nav-link.active { 
+            background-color: #2563eb; 
+            color: #fff; 
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Main Content Area Styling */
+        .main-content { 
+            margin-left: 280px; /* Pushes content right of the fixed sidebar */
+            padding: 40px; 
+            min-height: 100vh;
+        }
+
+        /* Predictor Card Styling (From previous steps) */
+        .predictor-card { max-width: 850px; margin: 0 auto; border: none; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header-section { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 40px 20px; }
+        .form-label { font-size: 0.9rem; letter-spacing: 0.025em; }
+        .btn-primary { background-color: #2563eb; border: none; padding: 12px; font-weight: 600; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar d-flex flex-column p-4 shadow-lg">
+    <div class="mb-4 text-center">
+        <h3 class="fs-4 fw-bold mb-0 text-white">Course Analytics</h3>
+        <small class="opacity-50 text-uppercase tracking-wider">System v1.0</small>
+    </div>
+    <hr class="border-secondary mb-4">
+    
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item"><a href="/dashboard/" class="nav-link">Dashboard</a></li>
+        <li class="nav-item"><a href="/data/" class="nav-link">View Data</a></li>
+        <li class="nav-item mt-2"><a href="/" class="nav-link active">ML Predictor</a></li>
+    </ul>
+    
+    <hr class="border-secondary mt-4">
+    <div class="small text-center opacity-50">
+        Academic Final Project<br>BSCS 2A &bull; 2026
+    </div>
+</nav>
+
+<div class="main-content d-flex align-items-center">
+    <div class="container-fluid">
+        <div class="card predictor-card">
+            <div class="header-section text-center">
+                <h1 class="display-6 fw-bold">Classification Engine</h1>
+                <p class="opacity-75 mb-0">Evaluate learner metrics against the trained Random Forest model</p>
+            </div>
+            
+            <div class="card-body p-5">
+                {% if result %}
+                <div class="alert {% if 'High' in result %}alert-success border-success{% else %}alert-danger border-danger{% endif %} text-center mb-5 shadow-sm" role="alert">
+                    <p class="mb-1 text-uppercase small fw-bold">System Assessment</p>
+                    <h3 class="alert-heading mb-0"><strong>{{ result }}</strong></h3>
+                </div>
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row g-4">
+                        {% for item in feature_list %}
+                        <div class="col-md-6">
+                            <label class="form-label text-uppercase fw-bold text-muted">{{ item.label }}</label>
+                            
+                            {% if item.id == 'platform' %}
+                                <select name="{{ item.id }}" class="form-select shadow-sm border-0 bg-light" required>
+                                    <option value="" selected disabled>Choose platform...</option>
+                                    <option value="0">Coursera</option>
+                                    <option value="1">edX</option>
+                                    <option value="2">Udemy</option>
+                                    <option value="3">FutureLearn</option>
+                                    <option value="4">Skillshare</option>
+                                </select>
+
+                            {% elif item.id == 'completion_status' or item.id == 'anomaly_flag' or item.id == 'is_high_feedback' %}
+                                <div class="form-control d-flex align-items-center shadow-sm border-0 bg-light" style="min-height: calc(1.5em + .75rem + 2px);">
+                                    <div class="form-check form-switch mb-0 w-100">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="{{ item.id }}" id="{{ item.id }}" value="1" style="cursor: pointer;">
+                                        <label class="form-check-label ms-2 text-dark" for="{{ item.id }}" style="cursor: pointer;">Active / Yes</label>
+                                    </div>
+                                </div>
+
+                            {% else %}
+                                <input type="number" step="any" name="{{ item.id }}" class="form-control shadow-sm border-0 bg-light" required placeholder="0.00">
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-5">
+                        <button type="submit" class="btn btn-primary w-100 mb-2 shadow-sm">Run Classification Model</button>
+                        <a href="/" class="btn btn-link w-100 text-decoration-none text-muted">Clear Inputs</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
